@@ -21,19 +21,6 @@ proc_stat_busy = -1		# Sentinal value
 proc_stat_idle = -1
 proc_stat_hist = []		# Holds last proc_stat_hist_n samples
 proc_stat_hist_n = 10		# Control length of history array to keep
-proc_stat_hist_n = 3
-
-
-cpu_tokens = [			# For demo
-	"cpu_label",
-	"user",
-	"nice",
-	"system",
-	"idle",
-	"iowait",
-	"irq",
-	"softirq"
-	]
 
 # ----------------------------------------------------------------------------------------
 #  Read and parse the first line of "/proc/stat", the cpu line, and calulate the
@@ -57,35 +44,21 @@ def proc_stat() :
 	lineList = fileHandle.readlines()
 	fileHandle.close()
 
-	##DEBUG## print lineList[0]
 	lineList[0] = re.sub('\n', '', lineList[0])        # Remove any newline which might be left
 
-	# x, user_val, nice_val, system_val, idle_val, iowait_val, irq_val, softirq_val = re.split('\n', lineList[0])
-	# user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice
-
 	tok = re.split(' *', lineList[0])
-
-	##DEBUG## for iii in range(1, 7):
-		##DEBUG## print str(iii) + "\t" + cpu_tokens[iii] + "\t" + tok[iii]
-		##DEBUG## # print str(iii) + "\t" + tok[iii] + "\t" + cpu_tokens[iii]
-	##DEBUG## print "========"
-
-	##DEBUG## for iii in range(0, len(tok)):
-		##DEBUG## print str(iii) + "\t" + tok[iii]
-	##DEBUG## print "========"
 
 	idle = int(tok[4]) + int(tok[5])
 	busy = int(tok[1]) + int(tok[2]) + int(tok[3]) + int(tok[6]) + int(tok[7]) + int(tok[8])
 
 	if proc_stat_busy < 0 :
 		print "Since last boot:  {} * 100 / {}".format( busy, idle+busy )
-		######################################################### print float(busy * 100) / float(idle + busy) 
 		print "{:6.3f}%".format( float(busy * 100) / float(idle + busy) )
 		print "========"
+
 	else :
 		delta_busy = busy - proc_stat_busy 
 		delta_idle = idle - proc_stat_idle
-		######################################################### print float(delta_busy * 100) / float(delta_idle + delta_busy) 
 		timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 		pct_util = float(delta_busy * 100) / float(delta_idle + delta_busy)
 		print "{} {:6.3f}%".format( timestamp, pct_util )
@@ -96,7 +69,9 @@ def proc_stat() :
 	proc_stat_busy = busy
 	proc_stat_idle = idle
 
+	# --------------------------------------------------------------------------------
 	#    cpu  1935650 0 1395066 620192925 17828 0 23111 0 0 0
+	#
 	#   user: normal processes executing in user mode
 	#   nice: niced processes executing in user mode
 	#   system: processes executing in kernel mode
@@ -105,7 +80,8 @@ def proc_stat() :
 	#   irq: servicing interrupts
 	#   softirq: servicing softirqs
 	# Time units are in USER_HZ or Jiffies (typically hundredths of a second).
-
+	#
+	#
 	#  https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
 	#
 	#       1       2      3       4         5      6     7        8      9      10
@@ -130,6 +106,10 @@ def proc_stat() :
 	#  idled = Idle - PrevIdle
 	#
 	#  CPU_Percentage = (totald - idled)/totald
+	# --------------------------------------------------------------------------------
+
+
+
 
 # ----------------------------------------------------------------------------------------
 #  This is really a little demonstrator loop
